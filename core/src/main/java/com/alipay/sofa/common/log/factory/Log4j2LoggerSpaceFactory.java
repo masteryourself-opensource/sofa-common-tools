@@ -74,18 +74,23 @@ public class Log4j2LoggerSpaceFactory extends AbstractLoggerSpaceFactory {
         while (checkers.hasNext()) {
             willReinitialize = !checkers.next().isReInitialize();
         }
+        // 初始化 log4j2 中的 loggerContext 对象
         this.loggerContext = initialize(willReinitialize);
+
+        // 根据 spi 机制加载 自定义 filter
         Iterator<Log4j2FilterGenerator> matchers = ServiceLoader.load(Log4j2FilterGenerator.class,
             this.getClass().getClassLoader()).iterator();
         while (matchers.hasNext() & willReinitialize) {
             Log4j2FilterGenerator matcher = matchers.next();
             for (Filter filter : matcher.generatorFilters()) {
+                // 添加到 loggerContext 中
                 this.loggerContext.addFilter(filter);
             }
         }
     }
 
     private LoggerContext initialize(boolean willReInitialize) throws Throwable {
+        // 先把配置文件中的属性 copy 到 ThreadContext（这个也是 log4j2 中的对象）中
         for (Map.Entry entry : properties.entrySet()) {
             ThreadContext.put((String) entry.getKey(),
                 properties.getProperty((String) entry.getKey()));
@@ -164,6 +169,7 @@ public class Log4j2LoggerSpaceFactory extends AbstractLoggerSpaceFactory {
             confFile = this.getClass().getClassLoader().getResource(spaceLoggingConfig);
         }
 
+        // 根据 spi 机制加载 Log4j2ReInitializer，可以对 loggerContext 进行定制化
         Iterator<Log4j2ReInitializer> matchers = ServiceLoader.load(Log4j2ReInitializer.class,
             this.getClass().getClassLoader()).iterator();
         if (matchers.hasNext()) {
@@ -184,10 +190,12 @@ public class Log4j2LoggerSpaceFactory extends AbstractLoggerSpaceFactory {
 
     @Override
     public Logger getLogger(String name) {
+        // 首先判断是否已经存在
         Logger logger = loggerMap.get(name);
         if (logger != null) {
             return logger;
         }
+        // 不存在就调用 newLogger 创建 log 对象，实际上是调用 loggerContext 创建
         loggerMap.putIfAbsent(name, newLogger(name, loggerContext));
         return loggerMap.get(name);
     }

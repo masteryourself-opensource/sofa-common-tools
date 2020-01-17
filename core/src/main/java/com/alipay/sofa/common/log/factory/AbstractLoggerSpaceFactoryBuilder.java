@@ -61,11 +61,14 @@ public abstract class AbstractLoggerSpaceFactoryBuilder implements LoggerSpaceFa
         AssertUtil.notNull(spaceClassloader);
 
         // load config file
+        // 读取 xml
         URL configFileUrl = getSpaceLogConfigFileURL(spaceClassloader, spaceName);
 
         // set default logging.level and logging.path
+        // 设置默认属性，如 level 和 path
         specifySpaceLogConfigProperties(spaceName);
 
+        // 真正创建 log4j2 实例
         return doBuild(spaceName, spaceClassloader, configFileUrl);
 
     }
@@ -74,9 +77,12 @@ public abstract class AbstractLoggerSpaceFactoryBuilder implements LoggerSpaceFa
         String suffix = LogEnvUtils.getLogConfEnvSuffix(spaceName);
 
         //TODO avoid this pattern "log-conf.xml.console"
+
+        // 加载 xml 配置文件的规则是:spaceName + /log/log4j2/log-conf.xml
         String logConfigLocation = spaceName.replace('.', '/') + "/" + LOG_DIRECTORY + "/"
                                    + getLoggingToolName() + "/" + LOG_XML_CONFIG_FILE_NAME + suffix;
 
+        // 加载 properties 配置文件的规则是:spaceName + /log/log4j2/config.properties
         String configProperyConfigLocation = spaceName.replace('.', '/') + "/" + LOG_DIRECTORY
                                              + "/" + getLoggingToolName() + "/"
                                              + LOG_CONFIG_PROPERTIES + suffix;
@@ -110,6 +116,7 @@ public abstract class AbstractLoggerSpaceFactoryBuilder implements LoggerSpaceFa
                 }
             }
 
+            // 获取配置文件资源路径，这里如果有多个，则会根据 priority 排序，选出优先级最大的
             configFileUrl = getResource(spaceClassloader, logConfigFileUrls, configPropertyFileUrls);
 
             //recommend this pattern "log-conf-console.xml"

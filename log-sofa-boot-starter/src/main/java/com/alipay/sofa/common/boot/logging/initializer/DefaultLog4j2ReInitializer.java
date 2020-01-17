@@ -67,6 +67,7 @@ public class DefaultLog4j2ReInitializer implements Log4j2ReInitializer {
         loggerContext.removeFilter(DefaultLog4j2FilterGenerator.FILTER);
         initLogContext(properties);
         markAsReInitialized(loggerContext);
+        // 判断是否开启 ConsoleAppender
         if (isConsoleAppenderOpen(spaceId.getSpaceName(), properties)) {
             final ConsoleAppender consoleAppender = consoleAppender(properties);
             loggerContext.addFilter(new AbstractFilter() {
@@ -99,8 +100,10 @@ public class DefaultLog4j2ReInitializer implements Log4j2ReInitializer {
 
                 private void resetLog(Logger logger) {
                     logger.getAppenders().clear();
+                    // 添加 consoleAppender
                     logger.addAppender(consoleAppender);
                     logger.setLevel(getConsoleLevel(spaceId.getSpaceName(), properties));
+                    // 设置 additive 为 false，不懂这一步是干嘛用的，反正这个会导致 root 级别的 appender 失效
                     logger.setAdditive(false);
                 }
             });

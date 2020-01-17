@@ -62,12 +62,14 @@ public class CommonLoggingApplicationListener
 
     public void reInitializeLog(Map<String, String> context) {
         for (String key : context.keySet()) {
+            // 如果 key 是以【sofa.middleware.log.】开头且不等于【sofa.middleware.log.console】且以【.console】结尾，就需要提前初始化 log，然后 reInitialize
             if (key.startsWith(Constants.SOFA_MIDDLEWARE_CONFIG_PREFIX)
                 && !key.equals(Constants.SOFA_MIDDLEWARE_ALL_LOG_CONSOLE_SWITCH)
                 && key.endsWith(Constants.CONSOLE_SUFFIX)) {
                 int index = Constants.SOFA_MIDDLEWARE_CONFIG_PREFIX.length();
                 // minus length of .console
                 int end = key.length() - Constants.CONSOLE_SUFFIX.length();
+                // 截取 spaceId，即去掉【sofa.middleware.log.】和【.console】剩下的中间部分
                 String spaceId = key.substring(index, end);
                 LoggerSpaceManager.getLoggerBySpace(spaceId, spaceId);
             }

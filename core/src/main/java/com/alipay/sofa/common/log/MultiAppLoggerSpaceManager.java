@@ -219,6 +219,7 @@ public class MultiAppLoggerSpaceManager {
         if (!isSpaceILoggerFactoryExisted(spaceId)) {
             synchronized (MultiAppLoggerSpaceManager.class) {
                 if (!isSpaceILoggerFactoryExisted(spaceId)) {
+                    // AbstractLoggerSpaceFactory 实现了 ILoggerFactory（slf4j） 接口，也就是在 slf4j 层做了一层自己的转换包
                     iLoggerFactory = createILoggerFactory(spaceId, spaceClassloader);
                     spaceInfo.setAbstractLoggerSpaceFactory(iLoggerFactory);
                 }
@@ -284,31 +285,39 @@ public class MultiAppLoggerSpaceManager {
 
         // do create
         try {
+            // 判断当前环境是否支持 logback，判断依据很简单，利用当前 classloader 能否加载到 ch.qos.logback.classic.LoggerContext 类
             if (LogEnvUtils.isLogbackUsable(spaceClassloader)) {
                 String isLogbackDisable = System
                     .getProperty(LOGBACK_MIDDLEWARE_LOG_DISABLE_PROP_KEY);
+
+                // 判断是否禁用了 logback
                 if (Boolean.TRUE.toString().equalsIgnoreCase(isLogbackDisable)) {
                     ReportUtil.reportWarn("Logback-Sofa-Middleware-Log is disabled!  -D"
                                           + LOGBACK_MIDDLEWARE_LOG_DISABLE_PROP_KEY + "=true");
                 } else {
                     ReportUtil.reportDebug("Actual binding is of type [ " + spaceId.toString()
                                            + " Logback ]");
+                    // 构造一个 LoggerSpaceFactory4LogbackBuilder 对象
                     LoggerSpaceFactoryBuilder loggerSpaceFactory4LogbackBuilder = new LoggerSpaceFactory4LogbackBuilder(
                         spaceId, spaceInfo);
 
+                    // 真正去创建 logback 实现类
                     return loggerSpaceFactory4LogbackBuilder.build(spaceId.getSpaceName(),
                         spaceClassloader);
                 }
             }
 
+            // 判断当前环境是否支持 log4j2，判断依据很简单，利用当前 classloader 能否加载到 org.apache.logging.slf4j.Log4jLoggerFactory 类
             if (LogEnvUtils.isLog4j2Usable(spaceClassloader)) {
                 String isLog4j2Disable = System.getProperty(LOG4J2_MIDDLEWARE_LOG_DISABLE_PROP_KEY);
+                // 同样去判断是否禁用了 log4j2
                 if (Boolean.TRUE.toString().equalsIgnoreCase(isLog4j2Disable)) {
                     ReportUtil.reportWarn("Log4j2-Sofa-Middleware-Log is disabled!  -D"
                                           + LOG4J2_MIDDLEWARE_LOG_DISABLE_PROP_KEY + "=true");
                 } else {
                     ReportUtil.reportDebug("Actual binding is of type [ " + spaceId.toString()
                                            + " Log4j2 ]");
+                    // 构造一个 LoggerSpaceFactory4Log4j2Builder 对象
                     LoggerSpaceFactoryBuilder loggerSpaceFactory4Log4j2Builder = new LoggerSpaceFactory4Log4j2Builder(
                         spaceId, spaceInfo);
 
@@ -317,6 +326,7 @@ public class MultiAppLoggerSpaceManager {
                 }
             }
 
+            // log4j 判断
             if (LogEnvUtils.isLog4jUsable(spaceClassloader)) {
                 String isLog4jDisable = System.getProperty(LOG4J_MIDDLEWARE_LOG_DISABLE_PROP_KEY);
                 if (Boolean.TRUE.toString().equalsIgnoreCase(isLog4jDisable)) {
@@ -333,6 +343,7 @@ public class MultiAppLoggerSpaceManager {
                 }
             }
 
+            // jcl 判断
             if (LogEnvUtils.isCommonsLoggingUsable(spaceClassloader)) {
                 //此种情形:commons-logging 桥接到 log4j 实现,默认日志实现仍然是 log4j
                 String isLog4jDisable = System
